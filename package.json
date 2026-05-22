@@ -6,8 +6,10 @@
   "scripts": {
     "build": "tsc",
     "start": "node server.js",
-  "dev": "npm run build && npm run start",
-  "admin:smoke": "node scripts/admin-smoke-test.js"
+    "dev": "npm run build && npm run start",
+    "admin:smoke": "node scripts/admin-smoke-test.js",
+    "seed": "node scripts/seed-db.js",
+    "setup": "npm install && npm run build && npm run seed"
   },
   "keywords": [],
   "author": "",
