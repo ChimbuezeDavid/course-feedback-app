@@ -1,0 +1,12 @@
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+
+.role-btn {
+  transition: all 0.2s ease;
+}
+
+.role-btn.active {
+  border-color: #2563eb;
+  background-color: #eff6ff;
+}

@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lecturer Dashboard - Course Feedback</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    /* Inline star display */
+    .star-display { display: flex; gap: 3px; align-items: center; }
+    .star-icon {
+      width: 18px; height: 18px;
+    }
+    .star-icon.filled  { color: #f59e0b; }
+    .star-icon.partial { color: #f59e0b; }
+    .star-icon.empty   { color: #d1d5db; }
+
+    /* Comment pill */
+    .comment-pill {
+      background: #f1f5f9;
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 0.85rem;
+      color: #374151;
+      font-style: italic;
+    }
+
+    /* Stat card hover */
+    .stat-card { transition: box-shadow 0.2s; }
+    .stat-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
+
+    /* Course card */
+    .course-card { transition: box-shadow 0.2s; }
+    .course-card:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.07); }
+
+    /* Filter select */
+    #level-filter {
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+      padding: 6px 12px;
+      font-size: 0.8rem;
+      color: #374151;
+      outline: none;
+      cursor: pointer;
+      background: white;
+    }
+    #level-filter:focus { border-color: #93c5fd; }
+  </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+
+  <!-- Top Navigation -->
+  <nav class="bg-white border-b border-gray-200 px-8 py-4 flex items-center justify-between sticky top-0 z-10">
+    <div class="flex items-center gap-3">
+      <div class="w-9 h-9 bg-blue-600 rounded-full flex items-center justify-center shadow-sm flex-shrink-0">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M12 3L1 9l11 6 9-4.91V17h2V9L12 3z"/>
+          <path d="M5 13.18v4L12 21l7-3.82v-4L12 17l-7-3.82z"/>
+        </svg>
+      </div>
+      <div>
+        <h1 class="font-semibold text-base text-gray-900 leading-tight">University Course Feedback System</h1>
+        <p class="text-xs text-gray-500">Teacher Portal</p>
+      </div>
+    </div>
+    <a href="index.html" class="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800 transition-colors">
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+      </svg>
+      Logout
+    </a>
+  </nav>
+
+  <!-- Main Content -->
+  <div class="max-w-4xl mx-auto px-4 py-8">
+
+    <!-- Welcome Banner -->
+    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm px-6 py-5 mb-8">
+      <p id="teacher-welcome" class="font-semibold text-gray-900 text-base">Welcome, Teacher</p>
+      <p class="text-sm text-gray-500 mt-0.5">View anonymous feedback from your students across all levels</p>
+    </div>
+
+    <!-- Section heading + filter -->
+    <div class="flex items-center justify-between mb-5">
+      <h2 class="text-xl font-bold text-gray-900">Student Feedback Dashboard</h2>
+      <div class="flex items-center gap-2">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L13 13.414V19a1 1 0 01-.553.894l-4 2A1 1 0 017 21v-7.586L3.293 6.707A1 1 0 013 6V4z"/>
+        </svg>
+        <select id="level-filter">
+          <option value="all">All Levels</option>
+          <option value="100">100 Level</option>
+          <option value="200">200 Level</option>
+          <option value="300">300 Level</option>
+          <option value="400">400 Level</option>
+          <option value="500">500 Level</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Summary Stats -->
+    <div class="grid grid-cols-3 gap-4 mb-6" id="stats-row">
+      <!-- Populated by JS -->
+    </div>
+
+    <!-- Course Feedback Cards -->
+    <div id="feedback-list" class="flex flex-col gap-5">
+      <!-- Populated by JS -->
+    </div>
+
+  </div>
+
+  <script src="js/teacher.js"></script>
+</body>
+</html>
