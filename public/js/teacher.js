@@ -261,6 +261,31 @@ function renderFeedback(items) {
 // Fetch feedback from API
 // ──────────────────────────────────────────────
 let allFeedback = [];
+let allLecturers = [];
+let activeLecturerId = '';
+
+async function loadLecturers() {
+  try {
+    const res = await fetch('/api/lecturers-public');
+    if (!res.ok) return;
+    allLecturers = await res.json();
+
+    const select = document.getElementById('lecturer-select');
+    if (!select) return;
+
+    const current = select.value;
+    select.innerHTML = '<option value="">(Select Lecturer)</option>';
+    allLecturers.forEach((lecturer) => {
+      const option = document.createElement('option');
+      option.value = lecturer.id;
+      option.textContent = lecturer.name;
+      select.appendChild(option);
+    });
+    select.value = current || activeLecturerId;
+  } catch (error) {
+    console.error('Failed to load lecturers:', error);
+  }
+}
 
 async function loadFeedback() {
   showLoading();
@@ -272,6 +297,7 @@ async function loadFeedback() {
     allFeedback = await res.json();
     console.log(`✅ Loaded ${allFeedback.length} course(s) with feedback from API`);
 
+    await loadLecturers();
     applyFilter();
 
   } catch (err) {
@@ -285,15 +311,30 @@ async function loadFeedback() {
 // ──────────────────────────────────────────────
 function applyFilter() {
   const val      = document.getElementById("level-filter").value;
-  const filtered = val === "all"
+  const lecturerVal = document.getElementById('lecturer-select')?.value || activeLecturerId;
+  let filtered = val === "all"
     ? allFeedback
     : allFeedback.filter(f => f.level === parseInt(val));
+
+  if (lecturerVal) {
+    filtered = filtered.filter((f) => String(f.lecturerId || '') === String(lecturerVal));
+  }
 
   renderStats(filtered);
   renderFeedback(filtered);
 }
 
 document.getElementById("level-filter").addEventListener("change", applyFilter);
+document.getElementById('lecturer-select')?.addEventListener('change', (e) => {
+  activeLecturerId = e.target.value;
+  applyFilter();
+});
+document.getElementById('clear-lecturer')?.addEventListener('click', () => {
+  activeLecturerId = '';
+  const select = document.getElementById('lecturer-select');
+  if (select) select.value = '';
+  applyFilter();
+});
 
 // ──────────────────────────────────────────────
 // Initial load

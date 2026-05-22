@@ -1,95 +1,112 @@
+
 # Course Feedback App
 
-An interactive, responsive full-stack web application designed to collect and aggregate course evaluations. The project features clean dashboards for both students (to rate and write comments on their courses) and lecturers (to track rating trends and read student feedback).
+This repository implements a lightweight course feedback system used to collect, aggregate and review student evaluations of courses and lecturers.
 
----
+Features at a glance:
+- Student dashboard to submit ratings, per-lecturer ratings, and comments.
+- Teacher dashboard to view aggregated feedback for courses.
+- Admin dashboard to manage courses and lecturers and assign lecturers to courses.
+- MongoDB-backed persistence and a single-file Node.js HTTP server (`server.js`).
 
-## Key Features
+## Quick Start
 
-### Role-Based Interface
-- **Dynamic Login**: A single entrance page that adjusts contextually. Selecting the student role prompts for their academic level, while selecting the teacher role automatically hides irrelevant fields and transitions seamlessly.
+Prerequisites:
+- Node.js (14+ recommended)
+- A MongoDB instance (local or Atlas)
 
-### Student Dashboard
-- **Level-Specific Course Listings**: Students see courses tailored specifically to their academic level.
-- **Dual Rating System**: Provides interactive star ratings for both the course content and the lecturer.
-- **Interactive Comment Section**: Course cards expand smoothly upon interaction, revealing a dedicated discussion/feedback area where comments can be written and viewed.
-- **Live Search**: Quick filter tools to search through courses by code or title in real time.
+1. Install dependencies:
 
-### Lecturer Dashboard
-- **Consolidated Analytics**: An aggregated view showing average course ratings, lecturer ratings, and response counts.
-- **Trending Alerts**: Special badges highlight courses that have received a high volume of responses.
-- **Comprehensive Feedback View**: Interactive course cards that expand to display all student comments.
-- **Filter by Level**: Ability to segment statistics by academic level (100, 200, 300, or 400).
-
-### Modern Design System
-- Built using semantic HTML5 and vanilla CSS.
-- Implements custom variables for a cohesive dark-mode/glassmorphism design theme.
-- Enhanced with micro-animations and smooth transition effects to improve interactivity.
-
----
-
-## Project Structure
-
-```
-├── public/                 # Static files served by the backend
-│   ├── css/
-│   │   └── style.css       # Core styling and premium layout theme
-│   ├── js/                 # Compiled JavaScript files
-│   ├── index.html          # Authentication / Login page
-│   ├── student-dashboard.html
-│   └── teacher-dashboard.html
-├── src/                    # Source TypeScript files
-│   ├── types/              # Type definitions for state and responses
-│   ├── utils/              # Helper functions (e.g. rating computations)
-│   └── main.ts             # Core frontend controller
-├── server.js               # Zero-dependency Node.js HTTP server
-├── tsconfig.json           # TypeScript configuration
-└── package.json            # Scripts and project dependencies
-```
-
----
-
-## Technical Stack
-
-- **Frontend**: HTML5, TypeScript, Vanilla CSS (using modern CSS Grid, Flexbox, Custom Properties, and Keyframe animations).
-- **Backend**: Node.js HTTP server. Serves static files and provides API endpoints for posting/getting in-memory aggregated feedback with no external framework dependencies.
-
----
-
-## Getting Started
-
-### Prerequisites
-Make sure you have [Node.js](https://nodejs.org/) installed on your machine.
-
-### Installation
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/ChimbuezeDavid/course-feedback-app.git
-   cd course-feedback-app
-   ```
-
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
-
-### Running the Application
-To compile the TypeScript files and start the Node.js development server simultaneously, run:
 ```bash
-npm run dev
+npm install
 ```
 
-Once started, the application is available at:
-- **Application Portal**: [http://localhost:3000](http://localhost:3000)
-- **Student Dashboard**: [http://localhost:3000/student-dashboard.html](http://localhost:3000/student-dashboard.html)
-- **Teacher Dashboard**: [http://localhost:3000/teacher-dashboard.html](http://localhost:3000/teacher-dashboard.html)
+2. Configure environment (create a `.env` or export env vars):
 
----
+```bash
+# Example (PowerShell)
+$env:MONGODB_URI='mongodb://localhost:27017'
+$env:ADMIN_KEY='admin123'
+$env:PORT=3006
+node server.js
+```
 
-## API Endpoints
+3. Start the server (example):
 
-The server exposes the following HTTP endpoints for frontend integration:
+```bash
+node server.js
+```
 
-- `POST /api/feedback` - Accepts and saves student ratings and comments in memory.
-- `GET /api/feedback` - Returns aggregated analytics for all courses.
-- `GET /api/feedback?level=<level>` - Returns filtered feedback matching a specific academic level.
+By default the server will connect to the `course_feedback_app` database and serve static files from the `public/` folder. The server prints the listening port and confirms MongoDB connection on startup.
+
+## Environment Variables
+
+- `MONGODB_URI` — MongoDB connection string (required for DB-backed mode).
+- `ADMIN_KEY` — Shared admin authorization key (default: `admin123` if not set).
+- `PORT` — HTTP port (default: `3000` if not set).
+
+## API Reference
+
+Public endpoints:
+- `GET /api/health` — Simple health check.
+- `GET /api/courses` — List courses. Supports `?level=` filter.
+- `POST /api/feedback` — Submit student feedback. Payload example:
+
+```json
+{
+   "courseCode": "CSC101",
+   "level": 100,
+   "rating": 4,
+   "lecturerRatings": [{ "lecturerId": "<id>", "rating": 5 }],
+   "comments": "Great course",
+   "wantsResponse": false
+}
+```
+- `GET /api/feedback` — Aggregated feedback (supports `?level=`).
+
+Admin endpoints (require header `Authorization: Bearer <ADMIN_KEY>`):
+- `GET /api/admin/courses`
+- `POST /api/admin/courses` — Create course (body: `{ code, name, level, lecturerId? }`).
+- `PUT /api/admin/courses/:code` — Update course.
+- `DELETE /api/admin/courses/:code` — Remove course.
+- `GET /api/admin/lecturers`
+- `POST /api/admin/lecturers` — Create lecturer (body: `{ name, role: "lecturer" }`).
+- `PUT /api/admin/lecturers/:id`
+- `DELETE /api/admin/lecturers/:id`
+
+Security note: the server validates that `lecturerId` assignments reference a user with role `lecturer`.
+
+## Data Model
+
+- `courses` collection: `{ code, name, level, lecturerId?, lecturerName? }`
+- `lecturers` collection: `{ _id, name, role }` (role expected to be `lecturer`)
+- `feedback` collection: stores per-course aggregated records and raw entries used to compute averages
+
+## Developer Notes
+
+- The server is implemented in `server.js` (vanilla Node.js HTTP server). It connects to MongoDB and seeds default course and lecturer data on first run.
+- Frontend is under `public/`:
+   - `public/admin-dashboard.html` + `public/js/admin.js` — Admin UI and logic.
+   - `public/student-dashboard.html` + `public/js/student.js` — Student UI.
+   - `public/teacher-dashboard.html` — Teacher UI (reads aggregated feedback).
+
+## Running Smoke Tests
+
+An automated smoke test for admin flows is available at `scripts/admin-smoke-test.js`.
+
+```bash
+# Example (PowerShell)
+$env:BASE_URL='http://localhost:3006'
+node scripts/admin-smoke-test.js
+```
+
+## Next Steps / TODO
+
+- Replace single-key admin auth with proper accounts (JWTs/passwords).
+- Add rate-limiting, input sanitization for displayed HTML, and production hardening.
+- Optionally add per-lecturer login and a view filtered to assigned courses.
+
+## License
+
+MIT — see LICENSE file if provided.
+

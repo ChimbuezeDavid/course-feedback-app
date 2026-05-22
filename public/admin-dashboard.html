@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard - Course Management</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    /* Modal styles */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 50;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+    }
+    .modal.active { display: flex; }
+    .modal-content {
+      background-color: white;
+      padding: 0;
+      border-radius: 16px;
+      width: 90%;
+      max-width: 500px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      display: flex;
+      flex-direction: column;
+      max-height: 90vh;
+      overflow: hidden;
+    }
+    .modal-header {
+      padding: 24px 24px 16px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    .modal-body {
+      padding: 20px 24px;
+      overflow-y: auto;
+    }
+    .modal-footer {
+      padding: 16px 24px;
+      border-top: 1px solid #e5e7eb;
+      display: flex;
+      gap: 12px;
+      justify-content: flex-end;
+    }
+
+    /* Form styles */
+    .form-group {
+      margin-bottom: 16px;
+    }
+    .form-label {
+      display: block;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: #374151;
+      margin-bottom: 6px;
+    }
+    .form-input, .form-select {
+      width: 100%;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-size: 0.875rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .form-input:focus, .form-select:focus {
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    /* Table styles */
+    .table-container {
+      overflow-x: auto;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    th {
+      background: #f9fafb;
+      padding: 12px;
+      text-align: left;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #6b7280;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    td {
+      padding: 12px;
+      border-bottom: 1px solid #e5e7eb;
+      font-size: 0.875rem;
+    }
+    tr:hover { background: #f9fafb; }
+
+    /* Action buttons */
+    .btn-sm {
+      padding: 4px 12px;
+      font-size: 0.75rem;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+      border: none;
+      font-weight: 500;
+    }
+    .btn-edit {
+      background: #dbeafe;
+      color: #1e40af;
+    }
+    .btn-edit:hover { background: #bfdbfe; }
+    .btn-delete {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+    .btn-delete:hover { background: #fecaca; }
+
+    /* Toast notification */
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      z-index: 100;
+      animation: slideUp 0.3s ease;
+    }
+    .toast-success { background: #d1fae5; color: #065f46; border: 1px solid #6ee7b7; }
+    .toast-error { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
+    @keyframes slideUp {
+      from { transform: translateY(20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    /* Auth modal */
+    .auth-wrapper {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+    }
+    .auth-card {
+      background: white;
+      padding: 40px;
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.1);
+      max-width: 400px;
+      width: 100%;
+    }
+  </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+
+  <!-- Auth Modal -->
+  <div id="auth-modal" class="modal active">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="text-xl font-semibold text-gray-900">Admin Access</h2>
+        <p class="text-sm text-gray-500 mt-1">Enter the admin key to continue</p>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Admin Key</label>
+          <input type="password" id="admin-key-input" class="form-input" placeholder="Enter admin key">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition"
+                onclick="verifyAdminKey()">Unlock</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Dashboard (hidden until authenticated) -->
+  <div id="dashboard" style="display: none;">
+    <!-- Top Navigation -->
+    <nav class="bg-white border-b border-gray-200 px-8 py-4 flex items-center justify-between sticky top-0 z-10">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 bg-red-600 rounded-full flex items-center justify-center shadow-sm flex-shrink-0">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M12 1c6.338 0 12 4.226 12 10s-5.662 10-12 10S0 16.774 0 11 5.662 1 12 1m0-1C5.373 0 0 4.03 0 9c0 4.314 4.323 8 10 8 .81 0 1.597-.066 2.34-.188l2.5 1.701-.96-2.856C15.026 14.38 16 11.864 16 9c0-4.97-4.03-9-9-9z"/>
+          </svg>
+        </div>
+        <div>
+          <h1 class="font-semibold text-base text-gray-900 leading-tight">Course Management</h1>
+          <p class="text-xs text-gray-500">Admin Dashboard</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-6">
+        <button id="nav-toggle" class="sm:hidden px-2 py-1 bg-gray-100 rounded-md">☰</button>
+        <div class="hidden sm:flex items-center gap-4 nav-links">
+          <a href="#courses-section" class="text-sm text-gray-600 hover:text-gray-900">Courses</a>
+          <a href="#lecturers-section" class="text-sm text-gray-600 hover:text-gray-900">Lecturers</a>
+          <a href="student-dashboard.html" target="_blank" class="text-sm text-gray-600 hover:text-gray-900">Student View</a>
+          <a href="teacher-dashboard.html" target="_blank" class="text-sm text-gray-600 hover:text-gray-900">Teacher View</a>
+        </div>
+        <button onclick="logout()"
+                class="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800 transition-colors">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+        </svg>
+        Logout
+      </button>
+      </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="max-w-6xl mx-auto px-4 py-8">
+
+      <!-- Header -->
+      <div id="courses-section" class="flex items-center justify-between mb-8">
+        <div>
+          <h2 class="text-2xl font-bold text-gray-900">Courses</h2>
+          <p class="text-sm text-gray-600 mt-1">Manage course catalog</p>
+        </div>
+        <button onclick="openAddModal()"
+                class="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+          </svg>
+          Add Course
+        </button>
+      </div>
+
+      <!-- Level Filter -->
+      <div class="mb-6 flex gap-2">
+        <select id="level-filter" class="form-select max-w-xs" onchange="filterByLevel()">
+          <option value="">All Levels</option>
+          <option value="100">Level 100</option>
+          <option value="200">Level 200</option>
+          <option value="300">Level 300</option>
+          <option value="400">Level 400</option>
+          <option value="500">Level 500</option>
+        </select>
+      </div>
+
+      <!-- Courses Table -->
+      <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Code</th>
+                <th>Course Name</th>
+                <th>Lecturer</th>
+                <th>Level</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="courses-table-body">
+              <tr>
+                <td colspan="5" class="text-center py-12 text-gray-400">Loading courses...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Lecturers Section -->
+      <div id="lecturers-section" class="flex items-center justify-between mt-12 mb-6">
+        <div>
+          <h2 class="text-2xl font-bold text-gray-900">Lecturers</h2>
+          <p class="text-sm text-gray-600 mt-1">Manage lecturer accounts</p>
+        </div>
+        <button onclick="openLecturerModal()"
+                class="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 transition">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+          </svg>
+          Add Lecturer
+        </button>
+      </div>
+
+      <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="lecturers-table-body">
+              <tr>
+                <td colspan="4" class="text-center py-12 text-gray-400">Loading lecturers...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Add/Edit Course Modal -->
+  <div id="course-modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="modal-title" class="text-xl font-semibold text-gray-900">Add Course</h2>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Course Code</label>
+          <input type="text" id="course-code" class="form-input" placeholder="e.g., CSC 101">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Course Name</label>
+          <input type="text" id="course-name" class="form-input" placeholder="e.g., Introduction to Computer Science">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Assigned Lecturer</label>
+          <select id="course-lecturer" class="form-select">
+            <option value="">Select Lecturer</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Level</label>
+          <select id="course-level" class="form-select">
+            <option value="">Select Level</option>
+            <option value="100">100</option>
+            <option value="200">200</option>
+            <option value="300">300</option>
+            <option value="400">400</option>
+            <option value="500">500</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg text-sm font-medium hover:bg-gray-200 transition"
+                onclick="closeModal('course-modal')">Cancel</button>
+        <button id="save-btn" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition"
+                onclick="saveCourse()">Add Course</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete Confirmation Modal -->
+  <div id="delete-modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="text-xl font-semibold text-gray-900">Delete Course</h2>
+      </div>
+      <div class="modal-body">
+        <p class="text-gray-700">Are you sure you want to delete <strong id="delete-course-name"></strong>? This action cannot be undone.</p>
+      </div>
+      <div class="modal-footer">
+        <button class="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg text-sm font-medium hover:bg-gray-200 transition"
+                onclick="closeModal('delete-modal')">Cancel</button>
+        <button class="px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 transition"
+                onclick="confirmDelete()">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Lecturer Modal -->
+  <div id="lecturer-modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="lecturer-modal-title" class="text-xl font-semibold text-gray-900">Add Lecturer</h2>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Full Name</label>
+          <input type="text" id="lecturer-name" class="form-input" placeholder="e.g., Dr. Jane Doe">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email (optional)</label>
+          <input type="email" id="lecturer-email" class="form-input" placeholder="e.g., jane.doe@example.com">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg text-sm font-medium hover:bg-gray-200 transition"
+                onclick="closeModal('lecturer-modal')">Cancel</button>
+        <button id="lecturer-save-btn" class="px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 transition"
+                onclick="saveLecturer()">Add Lecturer</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- View Lecturer's Courses Modal -->
+  <div id="view-courses-modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="view-courses-title" class="text-xl font-semibold text-gray-900">Lecturer Courses</h2>
+      </div>
+      <div class="modal-body" id="view-courses-body">
+        <!-- Populated by JS -->
+      </div>
+      <div class="modal-footer">
+        <button class="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg text-sm font-medium hover:bg-gray-200 transition"
+                onclick="closeModal('view-courses-modal')">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/nav.js"></script>
+  <script src="js/admin.js"></script>
+</body>
+</html>

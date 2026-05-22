@@ -123,10 +123,25 @@ function resetStars(group, key) {
 // ──────────────────────────────────────────────
 // Render course cards
 // ──────────────────────────────────────────────
-const courses = courseData[studentLevel] || courseData[400];
-const list    = document.getElementById("courses-list");
+let courses = [];
+const list = document.getElementById("courses-list");
 
-courses.forEach((course, idx) => {
+async function loadCourses() {
+  try {
+    const res = await fetch(`/api/courses?level=${studentLevel}`);
+    if (!res.ok) throw new Error("Failed to load courses");
+    const apiCourses = await res.json();
+    return apiCourses.length ? apiCourses : (courseData[studentLevel] || courseData[400] || []);
+  } catch (_error) {
+    return courseData[studentLevel] || courseData[400] || [];
+  }
+}
+
+function renderCourses(items) {
+  if (!list) return;
+  list.innerHTML = "";
+
+  items.forEach((course, idx) => {
   const commentKey = `comment_${studentLevel}_${idx}`;
   const savedComment = localStorage.getItem(commentKey) || "";
 
@@ -259,6 +274,12 @@ courses.forEach((course, idx) => {
     body.classList.toggle("expanded", expanded);
     chevron.classList.toggle("open", expanded);
   });
+  });
+}
+
+loadCourses().then((items) => {
+  courses = items;
+  renderCourses(items);
 });
 
 // ──────────────────────────────────────────────
