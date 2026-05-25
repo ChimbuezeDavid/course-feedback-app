@@ -26,8 +26,6 @@ npm install
 ```bash
 # Example (PowerShell)
 $env:MONGODB_URI='mongodb://localhost:27017'
-$env:ADMIN_KEY='admin123'
-$env:PORT=3006
 node server.js
 ```
 
